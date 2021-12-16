@@ -1,16 +1,7 @@
 import sequtils, strutils, strformat, math, algorithm, tables, hashes, sets, bitops
 
-type
-    Data = object
-        readBits : string
-        remainder : string
-        version : int
-        typeID : int
-        lateralValue : int
-
-
 const
-    filename = "testinput2"
+    filename = "testinput3"
     literalGroupSize = 5
 
 let
@@ -28,23 +19,26 @@ proc hexToBin(str : string) : string =
 
 
 
-proc solve(str : string) : (string, string, int) =
+proc solve(str : string) : (string, string, int64) =
+    if '1' notin str:
+        return (str, "", int64(0))
 
     var
-        c = 0
-        readBits : string
+        c         : int64 = 0
+        readBits  : string
         remainder : string
+
     proc readBit() : char = 
         result = str[c]
         readBits.add str[c]
         remainder = str[c+1..len(str)-1]
-        inc c
+        c += 1
 
 
     var
         packetVersionStr   : string
         packetTypeIDStr    : string
-        totalPacketVersion : int
+        totalPacketVersion : int64
 
     for _ in 0..2:
         packetVersionStr.add readBit()
@@ -87,10 +81,15 @@ proc solve(str : string) : (string, string, int) =
         echo fmt"lengthtypeidstr {lengthTypeIDStr}"
 
         if lengthTypeIDStr == '1':
-            echo "TODO THIS PART"
-            # let
-            #     numberOfSubpackets = fromBin[int](str[7..17])
+            var
+                numberOfSubpacketsStr : string
+                numberOfSubpackets    : int
+            for _ in 1..11:
+                numberOfSubpacketsStr.add readBit()
 
+            numberOfSubpackets = fromBin[int](numberOfSubpacketsStr)
+            let subresult = solve(remainder)
+            totalPacketVersion += subresult[2]
 
         else:
             var
@@ -104,15 +103,18 @@ proc solve(str : string) : (string, string, int) =
             for _ in 1..lengthOfSubpackets:
                 subpacketStr.add readBit()
             
-            echo subpacketStr
+            # echo subpacketStr
             let subresult = solve(subpacketStr)
-            totalPacketVersion.inc subresult[2]
+            totalPacketVersion += subresult[2]
 
 
-    echo "packet ver ", packetVersion
-    echo "packet type id ", packetTypeID
+    # echo "packet ver ", packetVersion
+    # echo "packet type id ", packetTypeID
 
     result = (readBits, remainder, totalPacketVersion)
+    let subresult = solve(remainder)
+    result[2] += subresult[2]
+    echo result
 
 
 
